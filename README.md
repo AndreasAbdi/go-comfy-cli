@@ -48,3 +48,38 @@ go run . run --named minimax-i2v
 The default server is `http://127.0.0.1:8000`; override it with `--url` or
 `COMFYUI_URL`. The current run command intentionally supports named workflows
 only. A future `--file` option is reserved for direct workflow-file execution.
+
+Raw JQ replacements use `SELECTOR::JSON_VALUE` and can be repeated:
+
+```powershell
+go run . run --name minimax-i2v `
+  --replace-json '.nodes[] | select(.id == 114) | .widgets_values[0]::"image.png"'
+```
+
+For friendlier arguments, create an args mapping file:
+
+```yaml
+version: 1
+aliases:
+  image:
+    selector: '.nodes[] | select(.type == "LoadImage") | .widgets_values[0]'
+    type: string
+    cardinality: many
+  output:
+    selector: '.nodes[] | select(.type == "SaveVideo") | .widgets_values[0]'
+    type: string
+    cardinality: one
+```
+
+Then apply aliases with `--set`:
+
+```powershell
+go run . run --name minimax-i2v `
+  --args-file minimax-map.yaml `
+  --set 'image=transparent_rgb_gaming_mouse.png' `
+  --set 'output=video/result'
+```
+
+Alias values are typed from the mapping (`string`, `number`, `integer`,
+`boolean`, or `json`). Indexed aliases can define `indexed_selector` and use
+the `alias[0]` syntax; `alias[]` applies the replacement to every match.

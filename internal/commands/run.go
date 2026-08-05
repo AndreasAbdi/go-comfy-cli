@@ -21,9 +21,22 @@ func runCommand() *cli.Command {
 		Usage: "Run a saved ComfyUI workflow",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "named",
+				Name:     "name",
+				Aliases:  []string{"named"},
 				Usage:    "workflow name, with or without the .json extension",
 				Required: true,
+			},
+			&cli.StringSliceFlag{
+				Name:  "replace-json",
+				Usage: "replace a jq-selected value: SELECTOR::JSON_VALUE (repeatable)",
+			},
+			&cli.StringSliceFlag{
+				Name:  "set",
+				Usage: "set an args-file alias: ALIAS=VALUE or ALIAS::VALUE (repeatable)",
+			},
+			&cli.StringFlag{
+				Name:  "args-file",
+				Usage: "YAML alias mapping used by --set",
 			},
 			&cli.StringFlag{
 				Name:    "url",
@@ -43,9 +56,20 @@ func runWorkflow(ctx *cli.Context) error {
 	}
 
 	registry := workflows.NewRegistry(dir)
-	workflow, err := registry.GetWorkflow(ctx.String("named"))
+	workflow, err := registry.GetWorkflow(ctx.String("name"))
 	if err != nil {
-		return fmt.Errorf("get workflow %q: %w", ctx.String("named"), err)
+		return fmt.Errorf("get workflow %q: %w", ctx.String("name"), err)
+	}
+
+	operations, err := replacementOperations(ctx)
+	if err != nil {
+		return err
+	}
+	if len(operations) > 0 {
+		workflow.Definition, err = workflows.Transpile(workflow.Definition, operations)
+		if err != nil {
+			return fmt.Errorf("transform workflow %q: %w", workflow.Name, err)
+		}
 	}
 
 	prompt, err := workflows.Prompt(workflow)
@@ -82,6 +106,39 @@ func runWorkflow(ctx *cli.Context) error {
 	encoder := json.NewEncoder(ctx.App.Writer)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+func replacementOperations(ctx *cli.Context) ([]workflows.Operation, error) {
+	operations := make([]workflows.Operation, 0)
+	for _, raw := range ctx.StringSlice("replace-json") {
+		operation, err := workflows.ParseJSONReplacement(raw)
+		if err != nil {
+			return nil, fmt.Errorf("--replace-json: %w", err)
+		}
+		operations = append(operations, operation)
+	}
+
+	assignments := ctx.StringSlice("set")
+	argsFile := strings.TrimSpace(ctx.String("args-file"))
+	if len(assignments) > 0 && argsFile == "" {
+		return nil, errors.New("--set requires --args-file")
+	}
+	if len(assignments) == 0 && argsFile != "" {
+		return nil, errors.New("--args-file requires at least one --set assignment")
+	}
+	if len(assignments) > 0 {
+		mapping, err := workflows.LoadMapping(argsFile)
+		if err != nil {
+			return nil, err
+		}
+		aliasOperations, err := mapping.AliasOperations(assignments)
+		if err != nil {
+			return nil, fmt.Errorf("--set: %w", err)
+		}
+		operations = append(operations, aliasOperations...)
+	}
+
+	return operations, nil
 }
 
 type comfyClient struct {
