@@ -9,7 +9,7 @@ go-comfy-cli is a CLI to generate images, audio, video from your command line, r
 
 ## Build and install
 
-### Install a release on Windows
+### Install
 
 ~~~powershell
 irm https://github.com/portpowered/you-agent-factory/releases/latest/download/install.ps1 | iex
@@ -17,26 +17,73 @@ irm https://github.com/portpowered/you-agent-factory/releases/latest/download/in
 
 Or download from the latest release.
 
-### Download models
+### Execute
+
+#### Clone the current repo
+
+```
+git clone https://github.com/AndreasAbdi/go-comfy-cli
+cd go-comfy-cli
+go build .
+```
+
+#### Download models
 
 If a workflow's models are not installed yet, download the models referenced by
 an explicit or named workflow:
 
 ~~~powershell
-go-comfy-cli model download --workflow .\workflows\anima-text-to-image\anima-text-to-image.json
-go-comfy-cli model download --name anima
+./go-comfy-cli model download --workflow .\workflows\anima-text-to-image\anima-text-to-image.json
+./go-comfy-cli model download --name anima
 ~~~
+
+#### run the model
+~~~powershell
+./go-comfy-cli run --workflow .\workflows\anima-text-to-image\anima-text-to-image.json --args-file .\workflows\anima-text-to-image\anima-text-to-image.args.yaml --set 'positive_prompt=a bright anime portrait'
+~~~
+
+#### using your own workflows
+if you already have workflows or something, then you can reference them directly via 
+
+```
+./go-comfy-cli run --named <your-workflow-in-comfy-ui>
+```
+
+Then if you want to say put a specific override in the json file. 
+
+create a file like this, where you put a `jq` selector called `args.yaml` that parses the json file. You need to look at the nodes to find the appropriate selectors though.
+
+~~~yaml
+version: 1
+aliases:
+  positive_prompt:
+    selector: '.nodes[] | select(.id == 90) | .widgets_values[0]'
+    type: string
+    cardinality: one
+~~~
+
+then you can run: 
+
+```
+go-comfy-cli run --named <your-workflow-in-comfy-ui> --args-file .\args.yaml --set 'positive_prompt=a bright anime portrait'
+```
+
+Or if you don't want to write an args file you can do like: 
+
+```
+go-comfy-cli run --named <your-workflow-name-in-comfy-ui> --replace-json '.nodes[] | select(.id == 90) | .widgets_values[0]::"a bright anime portrait"'
+```
 
 ## Command reference
 
 | Command | Function |
 | --- | --- |
 | go-comfy-cli workflow list | List JSON workflows in ComfyUI Desktop's user workflow directory |
-| go-comfy-cli workflow download <name> | Write a named workflow JSON definition to stdout |
-| go-comfy-cli workflow upload <name> --input-file <file.json> | Upload a workflow JSON definition, so that it can be invoked from the comfy UI website on localhost:8000 |
+| go-comfy-cli workflow download \<name> | Write a named workflow JSON definition to stdout |
+| go-comfy-cli workflow upload \<name> --input-file <file.json> | Upload a workflow JSON definition, so that it can be invoked from the comfy UI website on localhost:8000 |
 | go-comfy-cli model download --workflow <file.json> | Download models listed in a workflow |
-| go-comfy-cli model download --name <name> | Download models listed in a named workflow |
-| go-comfy-cli run --name <name> | Run a workflow by name from the Desktop workflow directory |
+| go-comfy-cli model download --name \<name> | Download models listed in a named workflow |
+| go-comfy-cli run --name \<name> | Run a workflow by name from the Desktop workflow directory |
 | go-comfy-cli run --workflow <file.json> | Run a workflow from an explicit JSON path |
 | go-comfy-cli run --args-file <file.yaml> --set ALIAS=VALUE | Apply aliases from a mapping file |
 | go-comfy-cli run --replace-json SELECTOR::JSON_VALUE | Apply one or more raw jq replacements on the workflow JSON |
@@ -49,19 +96,12 @@ go-comfy-cli model download --name anima
 
 ## Workflow packages and examples
 
-Each workflow keeps its JSON, args mapping, prompt inputs, and runnable
-examples together:
 
-- [Anima](workflows/anima-text-to-image/README.md)
+- [Anima Text To Image](workflows/anima-text-to-image/README.md)
 - [Qwen Image Edit](workflows/qwen-image-edit/README.md)
 - [MiniMax Image to Video](workflows/minimax-image-to-video/README.md)
 - [MiniMax Reference Video to Video](workflows/minimax-reference-video/README.md)
 - [MiniMax Audio Reference to Video](workflows/minimax-audio-reference/README.md)
-
-All examples assume the CLI has already been built and that the command is
-being run from this repository's root directory. Local file references are
-resolved from the current working directory, then ComfyUI's input directory.
-For media kept beside a workflow, pass the explicit `./workflows/...` path.
 
 ## Args files and JSON replacements
 
@@ -101,6 +141,11 @@ go-comfy-cli run --workflow .\workflows\minimax-audio-reference\minimax-audio-re
 
 ## Development checks
 
+```
+make
+```
+
+or alternatively:
 ~~~powershell
 go test ./...
 go fmt ./...
@@ -117,6 +162,29 @@ go build -o go-comfy-cli.exe .
 On Windows, place go-comfy-cli.exe on PATH, or invoke it as
 .\go-comfy-cli.exe from the directory containing the binary.
 
+## TODO: 
+- probably should prepackage the workflows with an init command so that people can just do something like
+
+```
+go-comfy-cli run --packaged anima --set "positive_prompt=blah"
+```
+
+- as well as 
+```
+go-comfy-cli config init, to pre-render any non existent packages off the latest update. 
+```
+
+
+- also probably
+```
+go-comfy-cli update
+```
+
+- and also
+
+```
+\t\t completions for enumerating workflow names and what not.
+```
 
 ## License
 
