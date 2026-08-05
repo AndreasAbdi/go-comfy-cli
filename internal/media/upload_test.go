@@ -115,6 +115,74 @@ func TestPrepareValueUsesExistingComfyUIInputReference(t *testing.T) {
 	}
 }
 
+func TestNewUploaderForWorkflowUsesCurrentWorkingDirectory(t *testing.T) {
+	root := t.TempDir()
+	workflowDir := filepath.Join(root, "workflow")
+	workingDir := filepath.Join(root, "working")
+	if err := os.MkdirAll(workflowDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(workingDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(workflowDir, "reference.png"), []byte("workflow-directory-image"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(workingDir, "reference.png"), []byte("working-directory-image"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(workingDir)
+
+	uploads := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/upload/image" {
+			http.NotFound(writer, request)
+			return
+		}
+		uploads++
+		if err := request.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatal(err)
+		}
+		file, _, err := request.FormFile("image")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer file.Close()
+		contents, err := io.ReadAll(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(contents) != "working-directory-image" {
+			t.Fatalf("uploaded contents = %q", contents)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"name":"reference.png","subfolder":"go-comfy-cli"}`))
+	}))
+	defer server.Close()
+
+	uploader, err := NewUploaderForWorkflow(server.URL, server.Client(), filepath.Join(workflowDir, "workflow.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	prepared, err := uploader.PreparePrompt(context.Background(), map[string]any{
+		"1": map[string]any{
+			"class_type": "LoadImage",
+			"inputs":     map[string]any{"image": "reference.png"},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := prepared["1"].(map[string]any)
+	inputs := node["inputs"].(map[string]any)
+	if inputs["image"] != "go-comfy-cli/reference.png" {
+		t.Fatalf("prepared image = %#v", inputs["image"])
+	}
+	if uploads != 1 {
+		t.Fatalf("upload count = %d, want 1", uploads)
+	}
+}
+
 func TestUploadContentTypeIsDerivedFromExtension(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "reference.mp4")

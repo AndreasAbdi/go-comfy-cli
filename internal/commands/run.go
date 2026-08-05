@@ -67,16 +67,16 @@ func runWorkflow(ctx *cli.Context) error {
 		baseURL: strings.TrimRight(ctx.String("url"), "/"),
 		http:    &http.Client{Timeout: 10 * time.Minute},
 	}
+	uploader, err := media.NewUploader(client.baseURL, client.http)
+	if err != nil {
+		return fmt.Errorf("prepare workflow media: %w", err)
+	}
 
 	operations, err := replacementOperations(ctx)
 	if err != nil {
 		return err
 	}
 	if len(operations) > 0 {
-		uploader, uploaderErr := media.NewUploader(client.baseURL, client.http)
-		if uploaderErr != nil {
-			return fmt.Errorf("prepare workflow media: %w", uploaderErr)
-		}
 		operations, err = uploader.PrepareOperations(ctx.Context, operations)
 		if err != nil {
 			return fmt.Errorf("prepare workflow media: %w", err)
@@ -90,6 +90,10 @@ func runWorkflow(ctx *cli.Context) error {
 	prompt, err := workflows.Prompt(workflow)
 	if err != nil {
 		return fmt.Errorf("prepare workflow %q: %w", workflow.Name, err)
+	}
+	prompt, err = uploader.PreparePrompt(ctx.Context, prompt)
+	if err != nil {
+		return fmt.Errorf("prepare workflow media: %w", err)
 	}
 
 	promptID, nodeErrors, err := client.QueuePrompt(ctx.Context, prompt)

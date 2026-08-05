@@ -69,15 +69,15 @@ Comfy UI files are located in usually
 Download a workflow definition to stdout:
 
 ```powershell
-go run . workflow download minimax-i2v > minimax-i2v.json
+go run . workflow download minimax-image-to-video > minimax-image-to-video.json
 ```
 
 Upload a workflow definition from stdin or from a file. The `.json` suffix is
 added when it is omitted:
 
 ```powershell
-Get-Content .\minimax-i2v.json -Raw | go run . workflow upload minimax-i2v
-go run . workflow upload minimax-i2v --input-file .\minimax-i2v.json
+Get-Content .\minimax-image-to-video.json -Raw | go run . workflow upload minimax-image-to-video
+go run . workflow upload minimax-image-to-video --input-file .\minimax-image-to-video.json
 ```
 
 Both commands accept `--dir` when working with a non-default workflow
@@ -86,16 +86,16 @@ directory.
 Checked-in workflow bundles are available in [`workflows/`](workflows/). Each
 workflow keeps its JSON definition, args mapping, and examples together:
 
-- [`workflows/anima/`](workflows/anima/) contains `anima.json` and `anima.args.yaml`
+- [`workflows/anima-text-to-image/`](workflows/anima-text-to-image/) contains `anima-text-to-image.json` and `anima-text-to-image.args.yaml`
 - [`workflows/qwen-image-edit/`](workflows/qwen-image-edit/) contains `qwen-image-edit.json` and `qwen-image-edit.args.yaml`
-- [`workflows/minimax-i2v/`](workflows/minimax-i2v/) contains `minimax-i2v.json`
-- [`workflows/minimax-r2v/`](workflows/minimax-r2v/) contains `minimax-r2v.json`, `minimax-r2v.args.yaml`, and the `power-headshake.md` example
-- [`workflows/minimax-r2v-audio/`](workflows/minimax-r2v-audio/) contains `minimax-r2v-audio.json`, `minimax-r2v-audio.args.yaml`, and `minimax-r2v-audio-prompt.md`
+- [`workflows/minimax-image-to-video/`](workflows/minimax-image-to-video/) contains `minimax-image-to-video.json`
+- [`workflows/minimax-reference-video/`](workflows/minimax-reference-video/) contains `minimax-reference-video.json`, `minimax-reference-video.args.yaml`, and the `power-prompt.md` example
+- [`workflows/minimax-audio-reference/`](workflows/minimax-audio-reference/) contains `minimax-audio-reference.json`, `minimax-audio-reference.args.yaml`, and `minimax-audio-reference-prompt.md`
 
 Run a named workflow through the local ComfyUI Desktop API:
 
 ```powershell
-go run . run --named minimax-i2v
+go run . run --named minimax-image-to-video
 ```
 
 Copy completed files into a local directory with `--output-folder`. Any
@@ -103,7 +103,7 @@ ComfyUI output subfolder is preserved below it, and the JSON result includes
 the resulting paths in `downloaded_outputs`:
 
 ```powershell
-go run . run --name minimax-i2v --output-folder .\out
+go run . run --name minimax-image-to-video --output-folder .\out
 ```
 
 The default server is `http://127.0.0.1:8000`; override it with `--url` or

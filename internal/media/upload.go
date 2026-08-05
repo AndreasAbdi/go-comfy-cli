@@ -53,6 +53,13 @@ func NewUploader(baseURL string, httpClient *http.Client) (*Uploader, error) {
 	}, nil
 }
 
+// NewUploaderForWorkflow is retained for callers using the earlier API. File
+// references are intentionally resolved from the current working directory,
+// not from the directory containing workflowPath.
+func NewUploaderForWorkflow(baseURL string, httpClient *http.Client, _ string) (*Uploader, error) {
+	return NewUploader(baseURL, httpClient)
+}
+
 // NewUploaderWithResolver is useful for tests and callers with a nonstandard
 // ComfyUI input directory.
 func NewUploaderWithResolver(baseURL string, httpClient *http.Client, resolver *LocalPathResolver) *Uploader {
@@ -82,6 +89,20 @@ func (u *Uploader) PrepareOperations(ctx context.Context, operations []workflows
 		prepared[index].Value = value
 	}
 	return prepared, nil
+}
+
+// PreparePrompt resolves local media values embedded in the flattened prompt
+// graph while still using ComfyUI's normal upload endpoint.
+func (u *Uploader) PreparePrompt(ctx context.Context, prompt map[string]any) (map[string]any, error) {
+	prepared, err := u.PrepareValue(ctx, prompt)
+	if err != nil {
+		return nil, err
+	}
+	result, ok := prepared.(map[string]any)
+	if !ok {
+		return nil, errors.New("prepared prompt is not a JSON object")
+	}
+	return result, nil
 }
 
 // PrepareValue resolves local files recursively in JSON-compatible values.

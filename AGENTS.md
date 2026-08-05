@@ -21,12 +21,12 @@ under workflows, we have prepackaged workflows that customers can mess around wi
 
 1. anima -> used for image generation
 2. qwen-image-edit -> used for image editing
-3. minimax-r2v -> used for generating based on a reference image
-4. minimax-r2v-audio -> used for generating based on some reference audio.
+3. minimax-reference-video -> used for generating based on a reference image
+4. minimax-audio-reference -> used for generating based on some reference audio.
 
-## instructions for prompt construction. 
+## instructions for prompt construction.
 
-certain models like minimax-r2v require that your prompts be constructed in a specific way. Please ensure that you MUST use the reference structure for generating the prompt. 
+certain models like minimax-reference-video require that your prompts be constructed in a specific way. Please ensure that you MUST use the reference structure for generating the prompt.
 
 the reference doc is in reference-docs/minimax-prompt-structure-guide.md for that specifically.
 

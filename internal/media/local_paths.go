@@ -37,6 +37,14 @@ func NewLocalPathResolver(inputDir string, roots ...string) *LocalPathResolver {
 // NewDefaultLocalPathResolver uses the current working directory and the
 // standard ComfyUI Desktop input directory for the current user.
 func NewDefaultLocalPathResolver() (*LocalPathResolver, error) {
+	return NewDefaultLocalPathResolverWithRoots()
+}
+
+// NewDefaultLocalPathResolverWithRoots uses the standard ComfyUI Desktop
+// input directory and working directory, plus any caller-provided roots.
+// Caller-provided roots are searched first so packaged workflow assets can
+// take precedence over an unrelated file with the same name in the cwd.
+func NewDefaultLocalPathResolverWithRoots(extraRoots ...string) (*LocalPathResolver, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
@@ -46,7 +54,8 @@ func NewDefaultLocalPathResolver() (*LocalPathResolver, error) {
 		return nil, err
 	}
 	inputDir := filepath.Join(home, "Documents", "ComfyUI", "input")
-	return NewLocalPathResolver(inputDir, workingDir), nil
+	roots := append(extraRoots, workingDir)
+	return NewLocalPathResolver(inputDir, roots...), nil
 }
 
 // Resolve returns a local regular file when requested resolves to one. A
