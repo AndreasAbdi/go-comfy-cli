@@ -1,0 +1,39 @@
+version: 2
+
+project_name: go-comfy-cli
+
+builds:
+  - id: go-comfy-cli
+    main: .
+    binary: go-comfy-cli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^Merge '
+      - '^docs:'
+      - '^test:'
