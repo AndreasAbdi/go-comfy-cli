@@ -9,15 +9,19 @@ go-comfy-cli is a CLI to generate images, audio, video from your command line, r
 
 ## Build and install
 
-### Install
+### Basic
 
+download the appropriate binary.
 ~~~powershell
-irm https://github.com/portpowered/you-agent-factory/releases/latest/download/install.ps1 | iex
+https://github.com/AndreasAbdi/go-comfy-cli/releases
 ~~~
 
-Or download from the latest release.
+Then run 
+```
+./go-comfy-cli run --named <your-workflow-in-comfy-ui>
+```
 
-### Execute
+### Execute with real library
 
 #### Clone the current repo
 
@@ -37,12 +41,12 @@ an explicit or named workflow:
 ./go-comfy-cli model download --name anima
 ~~~
 
-#### run the model
+#### Run the model
 ~~~powershell
 ./go-comfy-cli run --workflow .\workflows\anima-text-to-image\anima-text-to-image.json --args-file .\workflows\anima-text-to-image\anima-text-to-image.args.yaml --set 'positive_prompt=a bright anime portrait'
 ~~~
 
-#### using your own workflows
+#### Using your own workflows
 if you already have workflows or something, then you can reference them directly via 
 
 ```
