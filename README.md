@@ -38,3 +38,13 @@ Use `--dir` (or `-d`) to list another workflow directory:
 ```powershell
 go run . workflows list --dir C:\path\to\workflows
 ```
+
+Run a named workflow through the local ComfyUI Desktop API:
+
+```powershell
+go run . run --named minimax-i2v
+```
+
+The default server is `http://127.0.0.1:8000`; override it with `--url` or
+`COMFYUI_URL`. The current run command intentionally supports named workflows
+only. A future `--file` option is reserved for direct workflow-file execution.
