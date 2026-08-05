@@ -88,13 +88,16 @@ func outputReferenceKey(reference comfyOutputReference) string {
 }
 
 func outputPath(folder string, reference comfyOutputReference) (string, error) {
-	filename := filepath.FromSlash(reference.Filename)
-	if filename == "" || filename == "." || filename == ".." || filepath.IsAbs(filename) {
+	filename := normalizeOutputPath(reference.Filename)
+	if filename == "" || filename == "." || filename == ".." || isAbsoluteOutputPath(filename) {
 		return "", fmt.Errorf("invalid ComfyUI output filename %q", reference.Filename)
 	}
-	subfolder := filepath.FromSlash(reference.Subfolder)
+	subfolder := normalizeOutputPath(reference.Subfolder)
+	if isAbsoluteOutputPath(subfolder) {
+		return "", fmt.Errorf("invalid ComfyUI output subfolder %q", reference.Subfolder)
+	}
 	relative := filepath.Clean(filepath.Join(subfolder, filename))
-	if relative == "." || relative == ".." || filepath.IsAbs(relative) || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+	if relative == "." || relative == ".." || isAbsoluteOutputPath(relative) || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("invalid ComfyUI output path %q/%q", reference.Subfolder, reference.Filename)
 	}
 
@@ -104,6 +107,24 @@ func outputPath(folder string, reference comfyOutputReference) (string, error) {
 		return "", fmt.Errorf("ComfyUI output escapes output folder: %q/%q", reference.Subfolder, reference.Filename)
 	}
 	return path, nil
+}
+
+func normalizeOutputPath(value string) string {
+	return filepath.FromSlash(strings.ReplaceAll(strings.TrimSpace(value), `\`, "/"))
+}
+
+func isAbsoluteOutputPath(value string) bool {
+	normalized := strings.ReplaceAll(value, `\`, "/")
+	if filepath.IsAbs(value) || filepath.VolumeName(value) != "" || strings.HasPrefix(normalized, "/") {
+		return true
+	}
+	// filepath.VolumeName is OS-specific. Reject Windows drive paths even
+	// when the workflow is being validated on a Unix runner.
+	return len(normalized) >= 2 && isASCIIAlpha(normalized[0]) && normalized[1] == ':'
+}
+
+func isASCIIAlpha(value byte) bool {
+	return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z')
 }
 
 func (c comfyClient) downloadOutput(ctx context.Context, reference comfyOutputReference, destination string) error {

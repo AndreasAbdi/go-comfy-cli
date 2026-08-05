@@ -121,7 +121,8 @@ func ignorableStatError(err error) bool {
 	if errors.As(err, &errno) {
 		switch errno {
 		case syscall.Errno(123), // ERROR_INVALID_NAME
-			syscall.Errno(206): // ERROR_FILENAME_EXCED_RANGE
+			syscall.Errno(206), // ERROR_FILENAME_EXCED_RANGE
+			syscall.Errno(36):  // ENAMETOOLONG on Unix
 			return true
 		}
 	}

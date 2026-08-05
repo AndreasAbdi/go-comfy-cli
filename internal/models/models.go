@@ -236,22 +236,45 @@ func (d Downloader) Download(ctx context.Context, references []Model) ([]Result,
 }
 
 func modelPath(root string, reference Model) (string, error) {
-	directory := filepath.FromSlash(strings.TrimSpace(reference.Directory))
-	name := filepath.FromSlash(strings.TrimSpace(reference.Name))
+	directory := normalizeModelPath(reference.Directory)
+	name := normalizeModelPath(reference.Name)
 	if directory == "" || name == "" {
 		return "", errors.New("model directory and name are required")
 	}
-	if filepath.IsAbs(directory) || filepath.VolumeName(directory) != "" || filepath.IsAbs(name) || filepath.VolumeName(name) != "" {
+	if isAbsoluteModelPath(directory) || isAbsoluteModelPath(name) {
 		return "", errors.New("model destination must be relative")
 	}
 
 	categoryRoot := filepath.Join(root, directory)
+	if !pathWithinModelRoot(root, categoryRoot) {
+		return "", errors.New("model destination escapes the models directory")
+	}
 	destination := filepath.Join(categoryRoot, name)
-	relative, err := filepath.Rel(categoryRoot, destination)
-	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) || filepath.IsAbs(relative) {
+	if !pathWithinModelRoot(categoryRoot, destination) {
 		return "", errors.New("model destination escapes the models directory")
 	}
 	return destination, nil
+}
+
+func normalizeModelPath(value string) string {
+	return filepath.FromSlash(strings.ReplaceAll(strings.TrimSpace(value), `\`, "/"))
+}
+
+func isAbsoluteModelPath(value string) bool {
+	normalized := strings.ReplaceAll(value, `\`, "/")
+	if filepath.IsAbs(value) || filepath.VolumeName(value) != "" || strings.HasPrefix(normalized, "/") {
+		return true
+	}
+	return len(normalized) >= 2 && isASCIIAlphaModelPath(normalized[0]) && normalized[1] == ':'
+}
+
+func isASCIIAlphaModelPath(value byte) bool {
+	return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z')
+}
+
+func pathWithinModelRoot(root, candidate string) bool {
+	relative, err := filepath.Rel(root, candidate)
+	return err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) && !filepath.IsAbs(relative)
 }
 
 func (d Downloader) downloadOne(ctx context.Context, client *http.Client, reference Model, destination string) error {
