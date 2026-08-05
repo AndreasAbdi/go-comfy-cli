@@ -8,8 +8,10 @@ subject_definitions:
 
 <Video 1> is the source GIF whose approximate composition, animation timing, loop duration, pose progression, framing, background transitions, and rhythmic frame structure are used as the basis of the target video edit.
 
+<Audio 1> is the synchronized audio track from <Video 1>, including its original sound effects and music, and is reused as the target video's complete final audio track.
+
 summary:
-[video editing + reference generation] The target video is an edited version of <Video 1>. The original horned girl is replaced by <Subject 1>, while <Subject 2> preserves the source GIF’s rough manga-panel aesthetic and <Subject 3> preserves its approximate finger-pointing gesture beside the head, expression change, head movement, background flashes, and looping rhythm.
+[video editing + reference generation + audio reuse] The target video is an edited version of <Video 1>. The original horned girl is replaced by <Subject 1>, while <Subject 2> preserves the source GIF’s rough manga-panel aesthetic and <Subject 3> preserves its approximate finger-pointing gesture beside the head, expression change, head movement, background flashes, and looping rhythm. The original synchronized audio from <Audio 1> is reused as the complete final soundtrack.
 
 retention_analysis:
 <Subject 1> (appears throughout [Shot 1]): fully_preserved - Makima’s strawberry-red braided hair, layered bangs, pale complexion, ringed golden-red eyes, white dress shirt, and black tie remain clearly identifiable despite the intentionally rough drawing style.
@@ -19,6 +21,8 @@ retention_analysis:
 <Subject 3> (appears throughout [Shot 1]): attribute_transfer - the source character’s closed-eye grimace, repetitive two-finger gesture aimed toward her head, subtle shaking, eye-opening beat, rightward head turn, and irritated final stare are transferred to Makima.
 
 <Video 1> (composition, pacing, and temporal structure): partially_preserved - the close-up framing, approximately 1.6-second loop, gesture sequence, pose progression, background-color progression, and limited-animation rhythm are retained, while the visible character design is replaced.
+
+<Audio 1> (appears throughout [Shot 1]): fully_copy - the synchronized source audio is reused 1:1 as the target video's complete final audio track.
 
 detailed_description:
 The target video uses a deliberately rough, low-frame-count manga-animation style. Lines should feel hand-inked and slightly unstable rather than polished, with flat colors, halftone shading, and abrupt graphic background changes.
@@ -35,10 +39,10 @@ Near the midpoint, the background shifts to rough blue and purple paint bands. M
 
 In the final third, Makima slowly turns her head toward screen-right while keeping her shoulders mostly fixed. Her gaze reaches screen-right before the full head turn finishes, creating a sharp sideways stare. Her expression relaxes from the scrunched grimace into controlled annoyance: lowered eyelids, nearly neutral lips, and faint tension in her cheek. The background cycles through yellow, orange, and rough red painted fields with white edge streaks. The last frame holds Makima’s ringed eyes and rightward glance for a brief beat, then cuts directly back to the opening closed-eye pose to create a seamless, intentionally abrupt loop.
 
-No dialogue appears. No visible text, logos, subtitles, or watermarks are present.
+No visible dialogue, text, logos, subtitles, or watermarks are present.
 
 overall_soundscape:
-A very soft cloth-and-hair rustle accompanies Makima’s subtle trembling and head turn. A brief low whoosh punctuates each abrupt background-color change. No dialogue or environmental ambience is present.
+Reuse <Audio 1> 1:1 as the complete final soundtrack, preserving its original timing, dialogue if present, music, sound effects, and ambience. Do not add, replace, or regenerate audio.
 
 non_diegetic_music:
-A short, seamless 1.6-second electronic-rock loop with a mischievous, irritated energy. It begins with a muted distorted bass pulse and a tight ticking hi-hat while Makima’s eyes are closed. As the background flashes through red, yellow, blue, and purple, clipped glitch percussion and a rising synth tone build tension. The moment her ringed eyes open is accented by a sharp electric-guitar stab and a compact bass hit. Her rightward side glance lands on a dry snare crack followed by a descending distorted synth note. The final beat cuts cleanly back into the opening pulse so the music loops without a noticeable gap. Fast tempo, approximately 150 BPM, with no vocals.
+Preserve the music, if any, from <Audio 1> 1:1 with its original timing and mix. Do not add, replace, or regenerate a separate score.

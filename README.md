@@ -101,11 +101,13 @@ go-comfy-cli run --named <your-workflow-name-in-comfy-ui> --replace-json '.nodes
 ## Workflow packages and examples
 
 
+- [AceStep Audio 1.5 Audio Generate](workflows/acestepaudio1.5-audiogenerate/README.md)
 - [Anima Text To Image](workflows/anima-text-to-image/README.md)
 - [Qwen Image Edit](workflows/qwen-image-edit/README.md)
 - [Qwen Image Edit Outpainting](workflows/qwen-image-edit-outpainting/README.md)
 - [MiniMax Image to Video](workflows/minimax-image-to-video/README.md)
 - [MiniMax R2V Audio + Image](workflows/minimax-r2v-audio-image/README.md)
+- [MiniMax R2V Audio + First/Last Image](workflows/minimax-r2v-audio-image-image/README.md)
 - [MiniMax Reference Video to Video](workflows/minimax-reference-video/README.md)
 - [MiniMax Audio Reference to Video](workflows/minimax-audio-reference/README.md)
 

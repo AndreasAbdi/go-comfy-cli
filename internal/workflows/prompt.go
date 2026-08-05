@@ -363,7 +363,7 @@ func widgetValue(currentNode node, currentInput input) (any, bool) {
 	index := 0
 	widgetValues := currentNode.WidgetsValues
 	if hasSeedControlWidget(currentNode) {
-		widgetValues = withoutSeedControlWidget(widgetValues)
+		widgetValues = withoutSeedControlWidget(currentNode, widgetValues)
 	}
 	for _, candidate := range currentNode.Inputs {
 		if !candidate.Widget {
@@ -389,24 +389,35 @@ func widgetValue(currentNode node, currentInput input) (any, bool) {
 }
 
 func hasSeedControlWidget(currentNode node) bool {
-	if currentNode.Type != "KSampler" && currentNode.Type != "KSamplerAdvanced" {
+	if currentNode.Type != "KSampler" && currentNode.Type != "KSamplerAdvanced" && currentNode.Type != "TextEncodeAceStepAudio1.5" {
 		return false
 	}
-	for _, currentInput := range currentNode.Inputs {
-		if currentInput.Name == "seed" && currentInput.Widget {
-			return len(currentNode.WidgetsValues) > 1
-		}
-	}
-	return false
+	seedIndex := seedWidgetIndex(currentNode)
+	return seedIndex >= 0 && seedIndex+1 < len(currentNode.WidgetsValues)
 }
 
-func withoutSeedControlWidget(values []any) []any {
-	if len(values) <= 1 {
+func seedWidgetIndex(currentNode node) int {
+	index := 0
+	for _, currentInput := range currentNode.Inputs {
+		if !currentInput.Widget {
+			continue
+		}
+		if currentInput.Name == "seed" {
+			return index
+		}
+		index++
+	}
+	return -1
+}
+
+func withoutSeedControlWidget(currentNode node, values []any) []any {
+	seedIndex := seedWidgetIndex(currentNode)
+	if seedIndex < 0 || seedIndex+1 >= len(values) {
 		return values
 	}
 	result := make([]any, 0, len(values)-1)
-	result = append(result, values[0])
-	result = append(result, values[2:]...)
+	result = append(result, values[:seedIndex+1]...)
+	result = append(result, values[seedIndex+2:]...)
 	return result
 }
 

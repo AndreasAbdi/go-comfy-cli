@@ -1,0 +1,18 @@
+version: 1
+aliases:
+  length:
+    selector: '.nodes[] | select(.title == "Song Duration") | .widgets_values[0]'
+    type: number
+    cardinality: one
+  duration:
+    selector: '.nodes[] | select(.title == "Song Duration") | .widgets_values[0]'
+    type: number
+    cardinality: one
+  audio_prompt:
+    selector: '.nodes[] | select(.type == "TextEncodeAceStepAudio1.5") | .widgets_values[0]'
+    type: string
+    cardinality: one
+  conditioning:
+    selector: '.nodes[] | select(.type == "TextEncodeAceStepAudio1.5") | .widgets_values[1]'
+    type: string
+    cardinality: one

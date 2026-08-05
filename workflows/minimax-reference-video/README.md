@@ -8,8 +8,13 @@ Files:
 - power-reference.mp4 — bundled reference video
 
 Local file references are resolved from the current working directory, then
-ComfyUI's input directory. From the repository root, use the explicit path for
-the bundled video:
+ComfyUI's input directory. The workflow extracts the input video's audio with
+`GetVideoComponents` and passes it to `ref_video_audios.ref_video_audio_0`, so
+the prompt can reuse the source soundtrack as `<Audio 1>`. The bundled
+`power-reference.mp4` is silent, but any input video with an audio track will
+use that track automatically.
+
+From the repository root, use the explicit path for the bundled video:
 
 ~~~powershell
 go-comfy-cli run --workflow .\workflows\minimax-reference-video\minimax-reference-video.json --args-file .\workflows\minimax-reference-video\minimax-reference-video.args.yaml --set 'video=.\workflows\minimax-reference-video\power-reference.mp4' --output-folder .\out\minimax-reference-video-default
