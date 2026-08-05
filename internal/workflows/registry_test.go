@@ -58,6 +58,35 @@ func TestRegistryRejectsPathLikeName(t *testing.T) {
 	}
 }
 
+func TestLoadWorkflowReadsExplicitPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "custom-workflow.json")
+	if err := os.WriteFile(path, []byte(" {\"nodes\":[]} \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	workflow, err := LoadWorkflow(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workflow.Name != "custom-workflow.json" || workflow.Path != path {
+		t.Fatalf("LoadWorkflow() returned %+v", workflow)
+	}
+	if string(workflow.Definition) != `{"nodes":[]}` {
+		t.Fatalf("LoadWorkflow() definition = %q", workflow.Definition)
+	}
+}
+
+func TestLoadWorkflowRejectsNonObjectJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "invalid.json")
+	if err := os.WriteFile(path, []byte("[]"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := LoadWorkflow(path); err == nil {
+		t.Fatal("LoadWorkflow() accepted a non-object JSON value")
+	}
+}
+
 func TestRegistryUploadsValidatedWorkflow(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "workflows")
 	definition := []byte("{\"nodes\":[]}")

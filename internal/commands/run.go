@@ -22,10 +22,13 @@ func runCommand() *cli.Command {
 		Usage: "Run a saved ComfyUI workflow",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "name",
-				Aliases:  []string{"named"},
-				Usage:    "workflow name, with or without the .json extension",
-				Required: true,
+				Name:    "name",
+				Aliases: []string{"named"},
+				Usage:   "workflow name, with or without the .json extension",
+			},
+			&cli.StringFlag{
+				Name:  "workflow",
+				Usage: "path to a workflow JSON file",
 			},
 			&cli.StringSliceFlag{
 				Name:  "replace-json",
@@ -55,15 +58,9 @@ func runCommand() *cli.Command {
 }
 
 func runWorkflow(ctx *cli.Context) error {
-	dir, err := workflows.DefaultDir()
+	workflow, err := selectedWorkflow(ctx)
 	if err != nil {
-		return fmt.Errorf("find user home directory: %w", err)
-	}
-
-	registry := workflows.NewRegistry(dir)
-	workflow, err := registry.GetWorkflow(ctx.String("name"))
-	if err != nil {
-		return fmt.Errorf("get workflow %q: %w", ctx.String("name"), err)
+		return err
 	}
 
 	client := comfyClient{
@@ -126,6 +123,37 @@ func runWorkflow(ctx *cli.Context) error {
 	encoder := json.NewEncoder(ctx.App.Writer)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+func selectedWorkflow(ctx *cli.Context) (workflows.Workflow, error) {
+	return selectWorkflow(ctx.String("name"), ctx.String("workflow"))
+}
+
+func selectWorkflow(rawName, rawPath string) (workflows.Workflow, error) {
+	name := strings.TrimSpace(rawName)
+	path := strings.TrimSpace(rawPath)
+	switch {
+	case name == "" && path == "":
+		return workflows.Workflow{}, errors.New("exactly one of --name/--named or --workflow is required")
+	case name != "" && path != "":
+		return workflows.Workflow{}, errors.New("--name/--named and --workflow are mutually exclusive")
+	case path != "":
+		workflow, err := workflows.LoadWorkflow(path)
+		if err != nil {
+			return workflows.Workflow{}, fmt.Errorf("load workflow file %q: %w", path, err)
+		}
+		return workflow, nil
+	default:
+		dir, err := workflows.DefaultDir()
+		if err != nil {
+			return workflows.Workflow{}, fmt.Errorf("find user home directory: %w", err)
+		}
+		workflow, err := workflows.NewRegistry(dir).GetWorkflow(name)
+		if err != nil {
+			return workflows.Workflow{}, fmt.Errorf("get workflow %q: %w", name, err)
+		}
+		return workflow, nil
+	}
 }
 
 func replacementOperations(ctx *cli.Context) ([]workflows.Operation, error) {

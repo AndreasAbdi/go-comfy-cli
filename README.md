@@ -1,159 +1,129 @@
-# tv-girl
-use comfyui, a tv, a cron, and an llm to trigger girl on tv. 
+# go-comfy-cli
 
-# what? 
+go-comfy-cli runs comfy UI from the CLI on an existing Comfy UI installed.
 
-This project is roughly a set of instructions and code that an agent can run against to generate images on your TV via chromecast. 
+# Prerequisites
 
-# How to use
-1. clone repo
-2. point an agent to this repo, ask it to use it. 
+- ComfyUI Desktop running locally.
+- The models and custom nodes required by the selected workflow have to be preinstalled. 
 
-# required:
-1. some agentic harness (agent)
-2. comfyui installation with ability to run a minimax h3 (RTX 4090/5090/etc)
-3. television with chromecast install
-4. some runtime daemon that can execute
+# Build and install
 
-# references: 
-1. https://github.com/erkstruwe/chromecast-cli
-2. https://docs.comfy.org/tutorials/video/minimax/minimax-h3#minimax-h3-reference-to-video-r2v
+## ez build
 
-## go-comfy-cli
-
-The repository includes a small Go CLI for discovering ComfyUI Desktop workflows.
-
+### install
+windows: 
 ```powershell
-go run . workflow list
+irm https://github.com/portpowered/you-agent-factory/releases/latest/download/install.ps1 | iex
 ```
 
-`workflows` remains an alias for compatibility, so `go run . workflows list`
-continues to work.
+or just download the binaries from the latest release file. 
 
-By default, it lists `.json` workflows from:
+### running
+#### install models if not downloaded
+```
+go-comfy-cli model download --workflow .\workflows\anima\anima.json
+```
+#### run the command
 
-```text
-<user home>\Documents\ComfyUI\user\default\workflows
+```
+go-comfy-cli run --workflow  ./workflows/anima/anima.json`
+  --args-file ./workflows/anima/anima.json`
+  --set 'positive_prompt=a picture of a banana' `
 ```
 
-Use `--dir` (or `-d`) to list another workflow directory:
+### manual build
+~~~powershell
+go build -o go-comfy-cli.exe .
+~~~
 
-```powershell
-go run . workflows list --dir C:\path\to\workflows
-```
+On Windows, place go-comfy-cli.exe on PATH, or invoke it as
+.\go-comfy-cli.exe from the directory containing the binary.
 
-Download a workflow definition to stdout:
 
-```powershell
-go run . workflow download minimax-i2v > minimax-i2v.json
-```
 
-Upload a workflow definition from stdin or from a file. The `.json` suffix is
-added when it is omitted:
+## Command reference
 
-```powershell
-Get-Content .\minimax-i2v.json -Raw | go run . workflow upload minimax-i2v
-go run . workflow upload minimax-i2v --input-file .\minimax-i2v.json
-```
+| Command | Function |
+| --- | --- |
+| go-comfy-cli workflow list | List JSON workflows in comfyUI's user workflow directory by the name |
+| go-comfy-cli workflow download <name> | Write a named workflow JSON definition to stdout |
+| go-comfy-cli workflow upload <name> --input-file <file.json> | Upload a workflow JSON definition |
+| go-comfy-cli model download --workflow <file.json> | Download models listed in a workflow |
+| go-comfy-cli model download --name <name> | Download models listed in a named workflow |
+| go-comfy-cli run --name <name> | Run a workflow by name from the Desktop workflow directory |
+| go-comfy-cli run --workflow <file.json> | Run a workflow from an explicit JSON path |
+| go-comfy-cli run --args-file <file.yaml> --set ALIAS=VALUE | Apply aliases from a mapping file |
+| go-comfy-cli run --replace-json 'SELECTOR::JSON_VALUE' | Apply one or more raw jq replacements on the json template file |
 
-Both commands accept `--dir` when working with a non-default workflow
-directory.
+### function notes
+1. Exactly one of --name/--named or --workflow is required. 
+2. Both --args-file/--set and --replace-json can be used with either workflow selector. 
+3. Use --output-folder to copy completed output files locally.
 
-Checked-in reference bundles are available in [`workflows/`](workflows/):
 
-- [`anima.json`](workflows/anima.json) with [`anima.args.yaml`](workflows/anima.args.yaml)
-- [`qwen-image-edit.json`](workflows/qwen-image-edit.json) with [`qwen-image-edit.args.yaml`](workflows/qwen-image-edit.args.yaml)
+## Workflow packages and examples
 
-Run a named workflow through the local ComfyUI Desktop API:
+Each workflow keeps its JSON, args mapping, prompt inputs, and runnable
+examples together:
 
-```powershell
-go run . run --named minimax-i2v
-```
+- [Anima](workflows/anima/README.md)
+- [Qwen Image Edit](workflows/qwen-image-edit/README.md)
+- [MiniMax Image to Video](workflows/minimax-i2v/README.md)
+- [MiniMax Reference Video to Video](workflows/minimax-r2v/README.md)
+- [MiniMax Audio Reference to Video](workflows/minimax-r2v-audio/README.md)
 
-Copy completed files into a local directory with `--output-folder`. Any
-ComfyUI output subfolder is preserved below it, and the JSON result includes
-the resulting paths in `downloaded_outputs`:
+## Args files and JSON replacements
 
-```powershell
-go run . run --name minimax-i2v --output-folder .\out
-```
+An args file maps a friendly alias to a jq selector:
 
-The default server is `http://127.0.0.1:8000`; override it with `--url` or
-`COMFYUI_URL`. The current run command intentionally supports named workflows
-only. A future `--file` option is reserved for direct workflow-file execution.
-
-Raw JQ replacements use `SELECTOR::JSON_VALUE` and can be repeated:
-
-```powershell
-go run . run --name minimax-i2v `
-  --replace-json '.nodes[] | select(.id == 114) | .widgets_values[0]::"image.png"'
-```
-
-For friendlier arguments, create an args mapping file:
-
-```yaml
+~~~yaml
 version: 1
 aliases:
-  image:
-    selector: '.nodes[] | select(.type == "LoadImage") | .widgets_values[0]'
-    type: string
-    cardinality: many
-  output:
-    selector: '.nodes[] | select(.type == "SaveVideo") | .widgets_values[0]'
+  positive_prompt:
+    selector: '.nodes[] | select(.id == 90) | .widgets_values[0]'
     type: string
     cardinality: one
-```
+~~~
 
-Then apply aliases with `--set`:
+Use the mapping with --set:
 
-```powershell
-go run . run --name minimax-i2v `
-  --args-file minimax-map.yaml `
-  --set 'image=transparent_rgb_gaming_mouse.png' `
-  --set 'output=video/result'
-```
+~~~powershell
+go-comfy-cli run --workflow .\workflows\anima\anima.json --args-file .\workflows\anima\anima.args.yaml --set 'positive_prompt=a bright anime portrait'
+~~~
 
-Alias values are typed from the mapping (`string`, `number`, `integer`,
-`boolean`, or `json`). Indexed aliases can define `indexed_selector` and use
-the `alias[0]` syntax; `alias[]` applies the replacement to every match.
+Raw replacements use SELECTOR::JSON_VALUE and can be repeated:
 
-Local file values are prepared automatically. Existing files under the local
-ComfyUI `input` directory are referenced by their input-relative name; other
-media files are uploaded through `/upload/image` and replaced with the returned
-ComfyUI input path. Existing `.md`, `.markdown`, and `.txt` files are read into
-the replacement value, which is useful for long prompt aliases.
+~~~powershell
+go-comfy-cli run --workflow .\workflows\anima\anima.json --replace-json '.nodes[] | select(.id == 90) | .widgets_values[0]::"a bright anime portrait"'
+~~~
 
-For example, the included R2V mapping can replace the reference video with a
-local file path:
+Local media values are resolved before the workflow is submitted. 
 
-```powershell
-go run . run --name minimax-r2v `
-  --args-file examples/minimax-r2v.args.yaml `
-  --set 'video=C:\path\to\reference.mp4'
-```
+Existing files under ComfyUI's input directory are referenced by input-relative name. 
+If you point the thing at a file, then it will download the file into your server for such things as: 
+1. markdown files and text files: .md, .markdown, and .txt
+2. image files (img)
+3. video files (mp4)
+4. audio files (wav)
 
-The audio-reference R2V example uses [examples/minimax-r2v-audio.args.yaml](examples/minimax-r2v-audio.args.yaml)
-and [reference-docs/minimax-r2v-audio-prompt.md](reference-docs/minimax-r2v-audio-prompt.md):
+You usually use the media files for image to image workflows and what not. 
+
+Example: 
 
 ```powershell
-go run . run --name minimax-r2v-audio `
-  --args-file examples/minimax-r2v-audio.args.yaml `
-  --set 'audio=C:\path\to\voice.wav' `
-  --set 'prompt=reference-docs/minimax-r2v-audio-prompt.md' `
-  --set 'duration=6.14'
+go-comfy-cli run --workflow .\workflows\minimax-r2v-audio\minimax-r2v-audio.json --args-file .\workflows\minimax-r2v-audio\minimax-r2v-audio.args.yaml --set 'audio=.\workflows\minimax-r2v-audio\hey_come_on_you_promised_to_take_me_shopping.wav' --set 'prompt=.\workflows\minimax-r2v-audio\minimax-r2v-audio-prompt.md' --set 'duration=5' --output-folder .\out\minimax-r2v-audio-args
 ```
 
-For a standalone audio reference, connect the `LoadAudio` output to
-`ref_audios.ref_audio_0`. The saved Desktop workflow can be corrected at run
-time with raw replacements before the args-file values are applied:
+## Development checks
 
-```powershell
-go run . run --name minimax-r2v-audio `
-  --replace-json '.nodes[] | select(.id == 136) | .inputs[] | select(.name == "ref_video_audios.ref_video_audio_0") | .link::null' `
-  --replace-json '.nodes[] | select(.id == 136) | .inputs[] | select(.name == "ref_audios.ref_audio_0") | .link::290' `
-  --replace-json '.links[] | select(.[0] == 290) | .[4]::8' `
-  --args-file examples/minimax-r2v-audio.args.yaml `
-  --set 'audio=C:\path\to\voice.wav' `
-  --set 'prompt=reference-docs/minimax-r2v-audio-prompt.md' `
-  --set 'duration=6.14'
-```
+~~~powershell
+go test ./...
+go fmt ./...
+go vet ./...
+go build ./...
+~~~
+
+## License
+
+MIT

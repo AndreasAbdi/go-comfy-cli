@@ -4,3 +4,7 @@ aliases:
     selector: '.nodes[] | select(.type == "LoadVideo") | .widgets_values[0]'
     type: string
     cardinality: one
+  prompt:
+    selector: '.nodes[] | select(.title == "Input Text (Prompt)") | .widgets_values[0]'
+    type: string
+    cardinality: one

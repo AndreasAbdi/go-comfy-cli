@@ -21,6 +21,7 @@ func NewApp() *cli.App {
 		DisableSliceFlagSeparator: true,
 		Commands: []*cli.Command{
 			workflowCommand(),
+			modelCommand(),
 			runCommand(),
 		},
 	}

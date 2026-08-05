@@ -57,6 +57,43 @@ func TestOutputPathRejectsTraversal(t *testing.T) {
 	}
 }
 
+func TestRunRequiresOneWorkflowSelector(t *testing.T) {
+	app := NewApp()
+	app.Writer = io.Discard
+	app.ErrWriter = io.Discard
+
+	err := app.Run([]string{"go-comfy-cli", "run"})
+	if err == nil || !strings.Contains(err.Error(), "exactly one") {
+		t.Fatalf("run without workflow selector error = %v", err)
+	}
+}
+
+func TestRunRejectsBothWorkflowSelectors(t *testing.T) {
+	app := NewApp()
+	app.Writer = io.Discard
+	app.ErrWriter = io.Discard
+
+	err := app.Run([]string{"go-comfy-cli", "run", "--name", "example", "--workflow", "example.json"})
+	if err == nil || !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Fatalf("run with both workflow selectors error = %v", err)
+	}
+}
+
+func TestRunSelectsExplicitWorkflowFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "explicit.json")
+	if err := os.WriteFile(path, []byte(`{"nodes":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	workflow, err := selectWorkflow("", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workflow.Name != "explicit.json" || workflow.Path != path {
+		t.Fatalf("selectWorkflow() returned %+v", workflow)
+	}
+}
+
 func TestDownloadWorkflowCommandWritesDefinitionToStdout(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "example.json"), []byte(`{"nodes":[]}`), 0o600); err != nil {

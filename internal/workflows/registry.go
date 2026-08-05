@@ -63,8 +63,7 @@ func (r *Registry) List() ([]Workflow, error) {
 }
 
 // GetWorkflow retrieves and validates a named workflow definition.
-// The .json suffix is optional, but path-like names are rejected intentionally;
-// --file is reserved for a later command extension.
+// The .json suffix is optional, but path-like names are rejected intentionally.
 func (r *Registry) GetWorkflow(name string) (Workflow, error) {
 	filename, err := workflowFilename(name)
 	if err != nil {
@@ -80,30 +79,45 @@ func (r *Registry) GetWorkflow(name string) (Workflow, error) {
 			continue
 		}
 
-		definition, err := os.ReadFile(entry.Path)
-		if err != nil {
-			return Workflow{}, err
-		}
-		definition = bytes.TrimSpace(definition)
-		if len(definition) == 0 {
-			return Workflow{}, errors.New("workflow definition is empty")
-		}
-		var object map[string]any
-		if err := json.Unmarshal(definition, &object); err != nil {
-			return Workflow{}, fmt.Errorf("parse workflow JSON: %w", err)
-		}
-		if object == nil {
-			return Workflow{}, errors.New("workflow definition must be a JSON object")
-		}
-
-		return Workflow{
-			Name:       entry.Name,
-			Path:       entry.Path,
-			Definition: json.RawMessage(definition),
-		}, nil
+		return loadWorkflowFile(entry.Path, entry.Name)
 	}
 
 	return Workflow{}, fmt.Errorf("workflow %q not found in %q", filename, r.dir)
+}
+
+// LoadWorkflow reads and validates a workflow definition from an explicit
+// path. Unlike GetWorkflow, the path does not need to be inside the user's
+// ComfyUI workflow directory.
+func LoadWorkflow(path string) (Workflow, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return Workflow{}, errors.New("workflow file path is required")
+	}
+	return loadWorkflowFile(path, filepath.Base(path))
+}
+
+func loadWorkflowFile(path, name string) (Workflow, error) {
+	definition, err := os.ReadFile(path)
+	if err != nil {
+		return Workflow{}, err
+	}
+	definition = bytes.TrimSpace(definition)
+	if len(definition) == 0 {
+		return Workflow{}, errors.New("workflow definition is empty")
+	}
+	var object map[string]any
+	if err := json.Unmarshal(definition, &object); err != nil {
+		return Workflow{}, fmt.Errorf("parse workflow JSON: %w", err)
+	}
+	if object == nil {
+		return Workflow{}, errors.New("workflow definition must be a JSON object")
+	}
+
+	return Workflow{
+		Name:       name,
+		Path:       path,
+		Definition: json.RawMessage(definition),
+	}, nil
 }
 
 // Get is a short alias for GetWorkflow.

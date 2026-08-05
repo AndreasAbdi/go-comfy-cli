@@ -39,7 +39,7 @@ C:\Users\<user>\AppData\Local\Comfy-Desktop\ComfyUI-Shared\input
 
 how to use today: 
 1. call CLI to upload your reference content
-2. TODO: figure out how to upload audio/video content
+2. TODO: figure out how to upload audio/video content (lol: its just the images API)
 3. invoke the CLI to runt he workflow definition with the reference images/names
 
 GOTCHAS: 
@@ -54,3 +54,58 @@ GOTCHAS:
 
 C:\Users\<user>\Documents\ComfyUI\input
 C:\Users\<workflows>\Documents\ComfyUI\user\default\workflows
+
+
+## asdasd
+
+
+uh bunch of docs in the 
+Comfy UI files are located in usually
+```text
+<user home>\Documents\ComfyUI\user\default\workflows
+```
+
+
+Download a workflow definition to stdout:
+
+```powershell
+go run . workflow download minimax-i2v > minimax-i2v.json
+```
+
+Upload a workflow definition from stdin or from a file. The `.json` suffix is
+added when it is omitted:
+
+```powershell
+Get-Content .\minimax-i2v.json -Raw | go run . workflow upload minimax-i2v
+go run . workflow upload minimax-i2v --input-file .\minimax-i2v.json
+```
+
+Both commands accept `--dir` when working with a non-default workflow
+directory.
+
+Checked-in workflow bundles are available in [`workflows/`](workflows/). Each
+workflow keeps its JSON definition, args mapping, and examples together:
+
+- [`workflows/anima/`](workflows/anima/) contains `anima.json` and `anima.args.yaml`
+- [`workflows/qwen-image-edit/`](workflows/qwen-image-edit/) contains `qwen-image-edit.json` and `qwen-image-edit.args.yaml`
+- [`workflows/minimax-i2v/`](workflows/minimax-i2v/) contains `minimax-i2v.json`
+- [`workflows/minimax-r2v/`](workflows/minimax-r2v/) contains `minimax-r2v.json`, `minimax-r2v.args.yaml`, and the `power-headshake.md` example
+- [`workflows/minimax-r2v-audio/`](workflows/minimax-r2v-audio/) contains `minimax-r2v-audio.json`, `minimax-r2v-audio.args.yaml`, and `minimax-r2v-audio-prompt.md`
+
+Run a named workflow through the local ComfyUI Desktop API:
+
+```powershell
+go run . run --named minimax-i2v
+```
+
+Copy completed files into a local directory with `--output-folder`. Any
+ComfyUI output subfolder is preserved below it, and the JSON result includes
+the resulting paths in `downloaded_outputs`:
+
+```powershell
+go run . run --name minimax-i2v --output-folder .\out
+```
+
+The default server is `http://127.0.0.1:8000`; override it with `--url` or
+`COMFYUI_URL`. The current run command intentionally supports named workflows
+only. A future `--file` option is reserved for direct workflow-file execution.

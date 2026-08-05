@@ -1,0 +1,10 @@
+version: 1
+aliases:
+  input_image:
+    selector: '.nodes[] | select(.type == "LoadImage") | .widgets_values[0]'
+    type: string
+    cardinality: one
+  positive_prompt:
+    selector: '.nodes[] | select(.id == 105) | .widgets_values[0]'
+    type: string
+    cardinality: one
