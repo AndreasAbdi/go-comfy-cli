@@ -1,0 +1,18 @@
+version: 1
+aliases:
+  reference_audio:
+    selector: '.nodes[] | select(.id == 148) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  reference_image:
+    selector: '.nodes[] | select(.id == 149) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  prompt:
+    selector: '.nodes[] | select(.title == "Input Text (Prompt)") | .widgets_values[0]'
+    type: string
+    cardinality: one
+  duration:
+    selector: '.nodes[] | select(.title == "Float (Duration)") | .widgets_values[0]'
+    type: number
+    cardinality: one

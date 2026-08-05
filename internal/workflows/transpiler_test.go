@@ -52,6 +52,24 @@ func TestApplyOperationsEnforcesCardinality(t *testing.T) {
 	}
 }
 
+func TestApplyOperationsPreservesWindowsPaths(t *testing.T) {
+	path := `.\workflows\minimax-r2v-audio-image\minimax-r2v-audio-image-prompt.md`
+	operation := Operation{Selector: ".prompt", Value: path, Cardinality: "one"}
+
+	got, err := ApplyOperations(map[string]any{"prompt": "old"}, []Operation{operation})
+	if err != nil {
+		t.Fatalf("ApplyOperations() returned error: %v", err)
+	}
+
+	result, ok := got.(map[string]any)
+	if !ok {
+		t.Fatalf("ApplyOperations() returned %T, want map[string]any", got)
+	}
+	if result["prompt"] != path {
+		t.Fatalf("prompt = %q, want %q", result["prompt"], path)
+	}
+}
+
 func TestTranspileReturnsJSON(t *testing.T) {
 	data := json.RawMessage(`{"value":"before"}`)
 	operation, err := ParseJSONReplacement(`.value::"after"`)

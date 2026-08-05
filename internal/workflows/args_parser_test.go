@@ -53,6 +53,24 @@ aliases:
 	}
 }
 
+func TestAliasOperationsPreserveWindowsPathValues(t *testing.T) {
+	mapping := Mapping{
+		Version: 1,
+		Aliases: map[string]Alias{
+			"prompt": {Selector: ".prompt", Type: "string", Cardinality: "one"},
+		},
+	}
+	path := `.\workflows\minimax-r2v-audio-image\minimax-r2v-audio-image-prompt.md`
+
+	operations, err := mapping.AliasOperations([]string{"prompt=" + path})
+	if err != nil {
+		t.Fatalf("AliasOperations() returned error: %v", err)
+	}
+	if len(operations) != 1 || operations[0].Value != path {
+		t.Fatalf("operation value = %#v, want %q", operations[0].Value, path)
+	}
+}
+
 func TestAliasOperationsApplyIndexedSelector(t *testing.T) {
 	mapping := Mapping{
 		Version: 1,

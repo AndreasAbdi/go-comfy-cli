@@ -201,13 +201,37 @@ func flattenGraph(current graph, external []value) (map[string]any, []value, err
 		}
 	}
 	for _, currentNode := range current.Nodes {
+		if isPrimitiveValueNode(currentNode.Type) && len(currentNode.WidgetsValues) > 0 {
+			nodeOutputs[currentNode.ID] = []value{{Literal: currentNode.WidgetsValues[0], HasValue: true}}
+		}
+		if currentNode.Mode == 4 {
+			for _, currentInput := range currentNode.Inputs {
+				if currentInput.Link == nil {
+					continue
+				}
+				if resolved, ok := resolveLink(current, *currentInput.Link, nil, nodeOutputs, external); ok {
+					nodeOutputs[currentNode.ID] = []value{resolved}
+					break
+				}
+			}
+		}
+	}
+	for _, currentNode := range current.Nodes {
 		if _, ok := current.Subgraphs[currentNode.Type]; !ok {
 			orderedNodes = append(orderedNodes, currentNode)
 		}
 	}
 
 	for _, currentNode := range orderedNodes {
-		if currentNode.Mode == 4 || currentNode.Mode == 2 || isVirtualNode(currentNode.Type) {
+		if currentNode.Mode == 4 || currentNode.Mode == 2 {
+			continue
+		}
+		if isVirtualNode(currentNode.Type) {
+			if isPrimitiveValueNode(currentNode.Type) {
+				if len(currentNode.WidgetsValues) > 0 {
+					nodeOutputs[currentNode.ID] = []value{{Literal: currentNode.WidgetsValues[0], HasValue: true}}
+				}
+			}
 			continue
 		}
 
@@ -279,7 +303,16 @@ func flattenGraph(current graph, external []value) (map[string]any, []value, err
 
 func isVirtualNode(nodeType string) bool {
 	switch nodeType {
-	case "MarkdownNote", "Note", "Reroute", "PrimitiveNode":
+	case "MarkdownNote", "Note", "Reroute":
+		return true
+	default:
+		return isPrimitiveValueNode(nodeType)
+	}
+}
+
+func isPrimitiveValueNode(nodeType string) bool {
+	switch nodeType {
+	case "PrimitiveNode", "PrimitiveFloat", "PrimitiveStringMultiline":
 		return true
 	default:
 		return false

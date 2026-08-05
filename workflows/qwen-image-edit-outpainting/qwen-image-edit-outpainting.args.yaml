@@ -1,0 +1,18 @@
+version: 1
+aliases:
+  input_image:
+    selector: '.nodes[] | select(.id == 109) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  reference_text:
+    selector: '.nodes[] | select(.id == 159) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  target_width:
+    selector: '.nodes[] | select(.id == 160) | .widgets_values[0]'
+    type: integer
+    cardinality: one
+  target_height:
+    selector: '.nodes[] | select(.id == 160) | .widgets_values[1]'
+    type: integer
+    cardinality: one

@@ -30,6 +30,10 @@ certain models like minimax-reference-video require that your prompts be constru
 
 the reference doc is in reference-docs/minimax-prompt-structure-guide.md for that specifically.
 
+## Windows CLI invocation
+
+When running `go-comfy-cli` from PowerShell, invoke the executable directly with `&` (or use forward-slash paths). Do not use `Start-Process -ArgumentList` for workflow runs: its Windows argument construction can strip backslashes from `--set` values such as prompt-file paths. The CLI itself preserves those paths and reads Markdown prompt files as their text contents.
+
 ## ci
 
 The Ci is github actions. 

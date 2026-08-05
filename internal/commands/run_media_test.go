@@ -87,3 +87,64 @@ func TestRunUploadsMediaFromCurrentWorkingDirectory(t *testing.T) {
 		t.Fatalf("prompt image = %#v", inputs["image"])
 	}
 }
+
+func TestRunReadsWindowsPromptFileArguments(t *testing.T) {
+	workingDir := t.TempDir()
+	workflowPath := filepath.Join(workingDir, "workflow.json")
+	argsPath := filepath.Join(workingDir, "workflow.args.yaml")
+	promptPath := filepath.Join(workingDir, "prompt.md")
+	workflow := `{"1":{"class_type":"TestPromptNode","inputs":{"prompt":"old"}}}`
+	args := "version: 1\naliases:\n  prompt:\n    selector: '.[\"1\"].inputs.prompt'\n    type: string\n    cardinality: one\n"
+	promptText := "subject_definitions:\n<Picture 1> is the supplied image.\n"
+	for path, contents := range map[string]string{
+		workflowPath: workflow,
+		argsPath:     args,
+		promptPath:   promptText,
+	} {
+		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Chdir(workingDir)
+
+	var queuedPrompt map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/prompt":
+			var payload struct {
+				Prompt map[string]any `json:"prompt"`
+			}
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+				t.Fatal(err)
+			}
+			queuedPrompt = payload.Prompt
+			writer.Header().Set("Content-Type", "application/json")
+			_, _ = writer.Write([]byte(`{"prompt_id":"prompt-path-test","node_errors":{}}`))
+		case "/history/prompt-path-test":
+			writer.Header().Set("Content-Type", "application/json")
+			_, _ = writer.Write([]byte(`{"prompt-path-test":{"status":{"status_str":"success","completed":true}}}`))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+
+	app := NewApp()
+	app.Writer = io.Discard
+	app.ErrWriter = io.Discard
+	if err := app.Run([]string{
+		"go-comfy-cli", "run",
+		"--workflow", workflowPath,
+		"--args-file", argsPath,
+		"--set", `prompt=.\prompt.md`,
+		"--url", server.URL,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	node := queuedPrompt["1"].(map[string]any)
+	inputs := node["inputs"].(map[string]any)
+	if inputs["prompt"] != promptText {
+		t.Fatalf("prompt = %#v, want %q", inputs["prompt"], promptText)
+	}
+}
