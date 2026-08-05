@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go-comfy-cli/internal/media"
 	"go-comfy-cli/internal/workflows"
 )
 
@@ -61,11 +62,24 @@ func runWorkflow(ctx *cli.Context) error {
 		return fmt.Errorf("get workflow %q: %w", ctx.String("name"), err)
 	}
 
+	client := comfyClient{
+		baseURL: strings.TrimRight(ctx.String("url"), "/"),
+		http:    &http.Client{Timeout: 10 * time.Minute},
+	}
+
 	operations, err := replacementOperations(ctx)
 	if err != nil {
 		return err
 	}
 	if len(operations) > 0 {
+		uploader, uploaderErr := media.NewUploader(client.baseURL, client.http)
+		if uploaderErr != nil {
+			return fmt.Errorf("prepare workflow media: %w", uploaderErr)
+		}
+		operations, err = uploader.PrepareOperations(ctx.Context, operations)
+		if err != nil {
+			return fmt.Errorf("prepare workflow media: %w", err)
+		}
 		workflow.Definition, err = workflows.Transpile(workflow.Definition, operations)
 		if err != nil {
 			return fmt.Errorf("transform workflow %q: %w", workflow.Name, err)
@@ -75,11 +89,6 @@ func runWorkflow(ctx *cli.Context) error {
 	prompt, err := workflows.Prompt(workflow)
 	if err != nil {
 		return fmt.Errorf("prepare workflow %q: %w", workflow.Name, err)
-	}
-
-	client := comfyClient{
-		baseURL: strings.TrimRight(ctx.String("url"), "/"),
-		http:    &http.Client{Timeout: 30 * time.Second},
 	}
 
 	promptID, nodeErrors, err := client.QueuePrompt(ctx.Context, prompt)

@@ -83,3 +83,18 @@ go run . run --name minimax-i2v `
 Alias values are typed from the mapping (`string`, `number`, `integer`,
 `boolean`, or `json`). Indexed aliases can define `indexed_selector` and use
 the `alias[0]` syntax; `alias[]` applies the replacement to every match.
+
+Local file values are prepared automatically. Existing files under the local
+ComfyUI `input` directory are referenced by their input-relative name; other
+media files are uploaded through `/upload/image` and replaced with the returned
+ComfyUI input path. Existing `.md`, `.markdown`, and `.txt` files are read into
+the replacement value, which is useful for long prompt aliases.
+
+For example, the included R2V mapping can replace the reference video with a
+local file path:
+
+```powershell
+go run . run --name minimax-r2v `
+  --args-file examples/minimax-r2v.args.yaml `
+  --set 'video=C:\path\to\reference.mp4'
+```

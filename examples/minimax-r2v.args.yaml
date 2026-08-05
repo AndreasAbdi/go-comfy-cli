@@ -1,0 +1,6 @@
+version: 1
+aliases:
+  video:
+    selector: '.nodes[] | select(.type == "LoadVideo") | .widgets_values[0]'
+    type: string
+    cardinality: one
