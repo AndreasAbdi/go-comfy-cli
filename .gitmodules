@@ -1,0 +1,6 @@
+[submodule "third_party/qwen3-tts.cpp"]
+	path = third_party/qwen3-tts.cpp
+	url = https://github.com/predict-woo/qwen3-tts.cpp.git
+[submodule "third_party/Qwen3-TTS"]
+	path = third_party/Qwen3-TTS
+	url = https://github.com/QwenLM/Qwen3-TTS.git

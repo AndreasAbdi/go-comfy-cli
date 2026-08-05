@@ -1,0 +1,18 @@
+version: 1
+aliases:
+  input_image:
+    selector: '.nodes[] | select(.id == 41) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  reference_image:
+    selector: '.nodes[] | select(.id == 83) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  positive_prompt:
+    selector: '.nodes[] | select(.id == 170) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  negative_prompt:
+    selector: '.nodes[] | select(.id == 170) | .widgets_values[1]'
+    type: string
+    cardinality: one

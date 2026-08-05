@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 // LocalPath describes a file resolved on the local filesystem.
@@ -79,7 +80,7 @@ func (r *LocalPathResolver) Resolve(requested string) (resolved LocalPath, found
 		seen[key] = struct{}{}
 
 		info, statErr := os.Stat(candidate)
-		if errors.Is(statErr, os.ErrNotExist) {
+		if ignorableStatError(statErr) {
 			continue
 		}
 		if statErr != nil {
@@ -97,6 +98,25 @@ func (r *LocalPathResolver) Resolve(requested string) (resolved LocalPath, found
 	}
 
 	return LocalPath{}, false, nil
+}
+
+func ignorableStatError(err error) bool {
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+
+	// Windows reports ordinary literal strings that are too long or contain
+	// invalid filename characters as path errors rather than ErrNotExist. They
+	// should remain literal values, just like any other non-file input.
+	var errno syscall.Errno
+	if errors.As(err, &errno) {
+		switch errno {
+		case syscall.Errno(123), // ERROR_INVALID_NAME
+			syscall.Errno(206): // ERROR_FILENAME_EXCED_RANGE
+			return true
+		}
+	}
+	return false
 }
 
 func relativePath(root, candidate string) (string, bool) {

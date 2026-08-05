@@ -328,14 +328,18 @@ func resolveLink(current graph, linkID int, outputs []value, nodeOutputs map[int
 
 func widgetValue(currentNode node, currentInput input) (any, bool) {
 	index := 0
+	widgetValues := currentNode.WidgetsValues
+	if hasSeedControlWidget(currentNode) {
+		widgetValues = withoutSeedControlWidget(widgetValues)
+	}
 	for _, candidate := range currentNode.Inputs {
 		if !candidate.Widget {
 			continue
 		}
-		if index >= len(currentNode.WidgetsValues) {
+		if index >= len(widgetValues) {
 			return nil, false
 		}
-		value := currentNode.WidgetsValues[index]
+		value := widgetValues[index]
 		index++
 		if candidate.Name != currentInput.Name {
 			continue
@@ -349,6 +353,28 @@ func widgetValue(currentNode node, currentInput input) (any, bool) {
 		return value, true
 	}
 	return nil, false
+}
+
+func hasSeedControlWidget(currentNode node) bool {
+	if currentNode.Type != "KSampler" && currentNode.Type != "KSamplerAdvanced" {
+		return false
+	}
+	for _, currentInput := range currentNode.Inputs {
+		if currentInput.Name == "seed" && currentInput.Widget {
+			return len(currentNode.WidgetsValues) > 1
+		}
+	}
+	return false
+}
+
+func withoutSeedControlWidget(values []any) []any {
+	if len(values) <= 1 {
+		return values
+	}
+	result := make([]any, 0, len(values)-1)
+	result = append(result, values[0])
+	result = append(result, values[2:]...)
+	return result
 }
 
 func asSlice(value any) []any {

@@ -24,8 +24,11 @@ This project is roughly a set of instructions and code that an agent can run aga
 The repository includes a small Go CLI for discovering ComfyUI Desktop workflows.
 
 ```powershell
-go run . workflows list
+go run . workflow list
 ```
+
+`workflows` remains an alias for compatibility, so `go run . workflows list`
+continues to work.
 
 By default, it lists `.json` workflows from:
 
@@ -39,10 +42,40 @@ Use `--dir` (or `-d`) to list another workflow directory:
 go run . workflows list --dir C:\path\to\workflows
 ```
 
+Download a workflow definition to stdout:
+
+```powershell
+go run . workflow download minimax-i2v > minimax-i2v.json
+```
+
+Upload a workflow definition from stdin or from a file. The `.json` suffix is
+added when it is omitted:
+
+```powershell
+Get-Content .\minimax-i2v.json -Raw | go run . workflow upload minimax-i2v
+go run . workflow upload minimax-i2v --input-file .\minimax-i2v.json
+```
+
+Both commands accept `--dir` when working with a non-default workflow
+directory.
+
+Checked-in reference bundles are available in [`workflows/`](workflows/):
+
+- [`anima.json`](workflows/anima.json) with [`anima.args.yaml`](workflows/anima.args.yaml)
+- [`qwen-image-edit.json`](workflows/qwen-image-edit.json) with [`qwen-image-edit.args.yaml`](workflows/qwen-image-edit.args.yaml)
+
 Run a named workflow through the local ComfyUI Desktop API:
 
 ```powershell
 go run . run --named minimax-i2v
+```
+
+Copy completed files into a local directory with `--output-folder`. Any
+ComfyUI output subfolder is preserved below it, and the JSON result includes
+the resulting paths in `downloaded_outputs`:
+
+```powershell
+go run . run --name minimax-i2v --output-folder .\out
 ```
 
 The default server is `http://127.0.0.1:8000`; override it with `--url` or
@@ -97,4 +130,30 @@ local file path:
 go run . run --name minimax-r2v `
   --args-file examples/minimax-r2v.args.yaml `
   --set 'video=C:\path\to\reference.mp4'
+```
+
+The audio-reference R2V example uses [examples/minimax-r2v-audio.args.yaml](examples/minimax-r2v-audio.args.yaml)
+and [reference-docs/minimax-r2v-audio-prompt.md](reference-docs/minimax-r2v-audio-prompt.md):
+
+```powershell
+go run . run --name minimax-r2v-audio `
+  --args-file examples/minimax-r2v-audio.args.yaml `
+  --set 'audio=C:\path\to\voice.wav' `
+  --set 'prompt=reference-docs/minimax-r2v-audio-prompt.md' `
+  --set 'duration=6.14'
+```
+
+For a standalone audio reference, connect the `LoadAudio` output to
+`ref_audios.ref_audio_0`. The saved Desktop workflow can be corrected at run
+time with raw replacements before the args-file values are applied:
+
+```powershell
+go run . run --name minimax-r2v-audio `
+  --replace-json '.nodes[] | select(.id == 136) | .inputs[] | select(.name == "ref_video_audios.ref_video_audio_0") | .link::null' `
+  --replace-json '.nodes[] | select(.id == 136) | .inputs[] | select(.name == "ref_audios.ref_audio_0") | .link::290' `
+  --replace-json '.links[] | select(.[0] == 290) | .[4]::8' `
+  --args-file examples/minimax-r2v-audio.args.yaml `
+  --set 'audio=C:\path\to\voice.wav' `
+  --set 'prompt=reference-docs/minimax-r2v-audio-prompt.md' `
+  --set 'duration=6.14'
 ```

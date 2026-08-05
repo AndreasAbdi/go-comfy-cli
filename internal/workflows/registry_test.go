@@ -57,3 +57,29 @@ func TestRegistryRejectsPathLikeName(t *testing.T) {
 		t.Fatal("Get() accepted a path-like workflow name")
 	}
 }
+
+func TestRegistryUploadsValidatedWorkflow(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "workflows")
+	definition := []byte("{\"nodes\":[]}")
+
+	workflow, err := NewRegistry(dir).Upload("uploaded", definition)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workflow.Name != "uploaded.json" {
+		t.Fatalf("Upload() returned name %q", workflow.Name)
+	}
+	got, err := os.ReadFile(workflow.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(definition) {
+		t.Fatalf("uploaded definition = %q, want %q", got, definition)
+	}
+}
+
+func TestRegistryRejectsInvalidUpload(t *testing.T) {
+	if _, err := NewRegistry(t.TempDir()).Upload("invalid", []byte("[]")); err == nil {
+		t.Fatal("Upload() accepted a non-object JSON value")
+	}
+}

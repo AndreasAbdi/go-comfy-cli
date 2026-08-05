@@ -45,6 +45,10 @@ func runCommand() *cli.Command {
 				EnvVars: []string{"COMFYUI_URL"},
 				Value:   defaultComfyUIURL,
 			},
+			&cli.StringFlag{
+				Name:  "output-folder",
+				Usage: "copy completed output files to this directory",
+			},
 		},
 		Action: runWorkflow,
 	}
@@ -108,6 +112,13 @@ func runWorkflow(ctx *cli.Context) error {
 	result, err := client.Wait(ctx.Context, promptID)
 	if err != nil {
 		return fmt.Errorf("run workflow %q: %w", workflow.Name, err)
+	}
+	if outputFolder := strings.TrimSpace(ctx.String("output-folder")); outputFolder != "" {
+		downloaded, err := client.DownloadOutputs(ctx.Context, result["outputs"], outputFolder)
+		if err != nil {
+			return fmt.Errorf("save workflow outputs: %w", err)
+		}
+		result["downloaded_outputs"] = downloaded
 	}
 
 	result["prompt_id"] = promptID
@@ -188,6 +199,12 @@ func (c comfyClient) QueuePrompt(ctx context.Context, prompt map[string]any) (st
 		return "", nil, fmt.Errorf("decode response (%s): %w", response.Status, err)
 	}
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		if len(result.NodeErrors) > 0 {
+			data, marshalErr := json.Marshal(result.NodeErrors)
+			if marshalErr == nil {
+				return "", result.NodeErrors, fmt.Errorf("server returned %s: node errors: %s", response.Status, data)
+			}
+		}
 		return "", nil, fmt.Errorf("server returned %s: %v", response.Status, result.Error)
 	}
 	if result.PromptID == "" {

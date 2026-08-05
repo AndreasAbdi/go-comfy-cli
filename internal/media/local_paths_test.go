@@ -3,6 +3,7 @@ package media
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -35,5 +36,18 @@ func TestLocalPathResolverLeavesMissingValuesUnchanged(t *testing.T) {
 	}
 	if found {
 		t.Fatal("Resolve() found a missing path")
+	}
+}
+
+func TestLocalPathResolverLeavesLongLiteralValuesUntouched(t *testing.T) {
+	requested := strings.Repeat("a prompt with words, ", 20)
+	resolver := NewLocalPathResolver(t.TempDir(), t.TempDir())
+
+	resolved, found, err := resolver.Resolve(requested)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found || resolved != (LocalPath{}) {
+		t.Fatalf("Resolve() = %#v, %v; want an unresolved literal", resolved, found)
 	}
 }

@@ -52,3 +52,30 @@ func TestPromptFlattensEmbeddedSubgraph(t *testing.T) {
 		t.Fatalf("Prompt() = %#v, want %#v", got, want)
 	}
 }
+
+func TestPromptSkipsKSamplerSeedControlWidget(t *testing.T) {
+	workflow := Workflow{Definition: json.RawMessage(`{
+      "nodes": [{
+        "id": 1,
+        "type": "KSampler",
+        "inputs": [
+          {"name": "seed", "type": "INT", "widget": {"name": "seed"}, "link": null},
+          {"name": "steps", "type": "INT", "widget": {"name": "steps"}, "link": null},
+          {"name": "cfg", "type": "FLOAT", "widget": {"name": "cfg"}, "link": null},
+          {"name": "sampler_name", "type": "COMBO", "widget": {"name": "sampler_name"}, "link": null},
+          {"name": "scheduler", "type": "COMBO", "widget": {"name": "scheduler"}, "link": null},
+          {"name": "denoise", "type": "FLOAT", "widget": {"name": "denoise"}, "link": null}
+        ],
+        "widgets_values": [123, "randomize", 30, 4, "euler", "simple", 1]
+      }]
+    }`)}
+
+	got, err := Prompt(workflow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inputs := got["1"].(map[string]any)["inputs"].(map[string]any)
+	if inputs["sampler_name"] != "euler" || inputs["scheduler"] != "simple" || inputs["denoise"] != float64(1) {
+		t.Fatalf("KSampler inputs = %#v", inputs)
+	}
+}

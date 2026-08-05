@@ -1,0 +1,10 @@
+version: 1
+aliases:
+  positive_prompt:
+    selector: '.nodes[] | select(.id == 90) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  negative_prompt:
+    selector: '.nodes[] | select(.id == 90) | .widgets_values[1]'
+    type: string
+    cardinality: one
