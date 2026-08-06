@@ -55,7 +55,7 @@ preserve momentum.
 
 | Episode | Title | One-minute story |
 | --- | --- | --- |
-| 1 | The Promise Receipt | Yuna says, "Hey, you promised to take me shopping." Her tote prints a glowing receipt, and the music-room wall opens into a celestial storefront where Sayo is waiting. |
+| 1 | The Promise Receipt | Yuna says, "Hey, come on. You promised to take me shopping today. Wake up." Her tote prints a glowing receipt, and the music-room wall opens into a celestial storefront where Sayo is waiting. |
 | 2 | Four Girls, Three Instruments | Yuna, Kiri, Sayo, and Emi attempt one rehearsal. A sour chord animates a swarm of tiny unpaid receipts, forcing them to play together. |
 | 3 | An Audience of One | Kiri freezes before a single child in the shopping street. Her anxiety becomes an infinite empty theater until the band deliberately joins her imperfect first note. |
 | 4 | The Dress With No Price | A celestial stage outfit makes Yuna effortlessly charismatic but erases her recognizable mannerisms. She rejects perfection and returns to her tangerine cardigan. |
@@ -197,9 +197,14 @@ Do not overwrite an approved reference. Increment the version and record why it 
 
 ## 5. Voice Production and Transfer Plan
 
-The named ComfyUI workflow `qwen3-tts` currently exposes Qwen3-TTS Voice Design, Voice Clone,
-and Custom Voice nodes. The local official Qwen implementation also supports the intended
-"Voice Design then Clone" process.
+All production TTS is a command-line-only path. ComfyUI TTS nodes, workflows, APIs, and the
+ComfyUI server are prohibited for voice design, cloning, auditions, and final dialogue. Final
+dialogue cloning runs through the pre-existing native launcher at
+`third_party/qwen3-tts.cpp/bin/qwen3-tts.ps1`. When a new identity must be designed, the
+checked-in official Qwen VoiceDesign package may be invoked by the command-line runner at
+`production/star-receipt/runtime/qwen_voice_design_cli.py`; its approved anchor is then cloned
+through the native launcher for every production line. ComfyUI remains available only for
+non-TTS image, video, and music workflows.
 
 ### Voice-source hierarchy
 
@@ -213,6 +218,10 @@ and Custom Voice nodes. The local official Qwen implementation also supports the
 5. Reuse that same clone reference for every line belonging to that character.
 6. Custom Voice may be used for temporary auditions, but it is not the identity master unless
    it wins a deliberate voice-lock review.
+7. Every retained voice manifest records the executable/runner, model, source WAV, exact source
+   transcript, command-line provenance, output hash, and an explicit `comfyui_tts_used: false`.
+8. An independent subagent verifies transcript, speaker identity, technical integrity, timing,
+   and the non-ComfyUI provenance before a voice can be locked.
 
 Voice cloning or transfer must only use recordings whose use is authorized for this project.
 
