@@ -96,6 +96,44 @@ func TestPromptFlattensEmbeddedSubgraph(t *testing.T) {
 	}
 }
 
+func TestPromptResolvesSubgraphPromotedPrimitive(t *testing.T) {
+	// Reproduces the MiniMax image-to-video template: a subgraph exposes a
+	// promoted "duration" widget on the instance node, wired internally to a
+	// PrimitiveFloat node's own "value" widget via the -10 boundary link. The
+	// PrimitiveFloat's stale baked-in widgets_values must not win over the
+	// live value supplied through its incoming link.
+	workflow := Workflow{Definition: json.RawMessage(`{
+      "nodes": [
+        {"id": 10, "type": "subgraph-id", "inputs": [{"name": "duration", "type": "FLOAT", "widget": {"name": "duration"}}], "widgets_values": [10]},
+        {"id": 20, "type": "Sink", "inputs": [{"name": "value", "type": "FLOAT", "link": 3}], "widgets_values": []}
+      ],
+      "links": [[3, 10, 0, 20, 0, "FLOAT"]],
+      "definitions": {"subgraphs": [{
+        "id": "subgraph-id",
+        "inputs": [{"name": "duration", "linkIds": [1]}],
+        "outputs": [{"name": "value", "linkIds": [2]}],
+        "nodes": [
+          {"id": 1, "type": "PrimitiveFloat", "inputs": [{"name": "value", "type": "FLOAT", "widget": {"name": "value"}, "link": 1}], "widgets_values": [2]}
+        ],
+        "links": [
+          [1, -10, 0, 1, 0, "FLOAT"],
+          [2, 1, 0, -20, 0, "FLOAT"]
+        ]
+      }]}
+    }`)}
+
+	got, err := Prompt(workflow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]any{
+		"20": map[string]any{"class_type": "Sink", "inputs": map[string]any{"value": float64(10)}},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("Prompt() = %#v, want %#v", got, want)
+	}
+}
+
 func TestPromptSkipsKSamplerSeedControlWidget(t *testing.T) {
 	workflow := Workflow{Definition: json.RawMessage(`{
       "nodes": [{

@@ -201,8 +201,10 @@ func flattenGraph(current graph, external []value) (map[string]any, []value, err
 		}
 	}
 	for _, currentNode := range current.Nodes {
-		if isPrimitiveValueNode(currentNode.Type) && len(currentNode.WidgetsValues) > 0 {
-			nodeOutputs[currentNode.ID] = []value{{Literal: currentNode.WidgetsValues[0], HasValue: true}}
+		if isPrimitiveValueNode(currentNode.Type) {
+			if resolved, ok := primitiveOutputValue(current, currentNode, nodeOutputs, external); ok {
+				nodeOutputs[currentNode.ID] = []value{resolved}
+			}
 		}
 		if currentNode.Mode == 4 {
 			for _, currentInput := range currentNode.Inputs {
@@ -228,8 +230,8 @@ func flattenGraph(current graph, external []value) (map[string]any, []value, err
 		}
 		if isVirtualNode(currentNode.Type) {
 			if isPrimitiveValueNode(currentNode.Type) {
-				if len(currentNode.WidgetsValues) > 0 {
-					nodeOutputs[currentNode.ID] = []value{{Literal: currentNode.WidgetsValues[0], HasValue: true}}
+				if resolved, ok := primitiveOutputValue(current, currentNode, nodeOutputs, external); ok {
+					nodeOutputs[currentNode.ID] = []value{resolved}
 				}
 			}
 			continue
@@ -299,6 +301,25 @@ func flattenGraph(current graph, external []value) (map[string]any, []value, err
 	}
 
 	return result, outputs, nil
+}
+
+// primitiveOutputValue resolves a Primitive*-node's output. A promoted
+// subgraph widget wires the primitive's own "value" widget input to the
+// subgraph's -10 boundary link, so an incoming link must take priority over
+// the node's own (possibly stale) baked-in widgets_values.
+func primitiveOutputValue(current graph, currentNode node, nodeOutputs map[int][]value, external []value) (value, bool) {
+	for _, currentInput := range currentNode.Inputs {
+		if currentInput.Link == nil {
+			continue
+		}
+		if resolved, ok := resolveLink(current, *currentInput.Link, nil, nodeOutputs, external); ok {
+			return resolved, true
+		}
+	}
+	if len(currentNode.WidgetsValues) > 0 {
+		return value{Literal: currentNode.WidgetsValues[0], HasValue: true}, true
+	}
+	return value{}, false
 }
 
 func isVirtualNode(nodeType string) bool {
