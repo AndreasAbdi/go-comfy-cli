@@ -28,6 +28,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+input/
+production/
+meta.md
+progress.txt
+
 out/
 # PyInstaller
 #   Usually these files are written by a python script from a template
