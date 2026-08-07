@@ -16,3 +16,10 @@ aliases:
     selector: '.nodes[] | select(.id == 170) | .widgets_values[1]'
     type: string
     cardinality: one
+  # Added for the Limbus prologue production run. The subgraph node (170)
+  # exposes its promoted widgets positionally; index 7 is the KSampler seed.
+  # Pinning it makes a re-roll a deliberate change rather than luck.
+  seed:
+    selector: '.nodes[] | select(.id == 170) | .widgets_values[7]'
+    type: number
+    cardinality: one

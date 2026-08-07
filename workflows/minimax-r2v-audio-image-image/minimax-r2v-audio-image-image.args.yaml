@@ -21,3 +21,29 @@ aliases:
     type: number
     cardinality: one
 
+  # Added for the Limbus prologue production run.
+  #
+  # The 1344x768 sitting in MiniMaxH3ReferenceToVideo.widgets_values is DEAD --
+  # width/height are driven by links from the ResolutionSelector (115), which
+  # ships at 0.4 MP (~864x480). Drive the selector, not the node.
+  aspect:
+    selector: '.nodes[] | select(.id == 115) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  megapixels:
+    selector: '.nodes[] | select(.id == 115) | .widgets_values[1]'
+    type: number
+    cardinality: one
+  # RandomNoise ships as "randomize"; pin the mode so the seed is honoured.
+  seed:
+    selector: '.nodes[] | select(.id == 129) | .widgets_values[0]'
+    type: number
+    cardinality: one
+  seed_mode:
+    selector: '.nodes[] | select(.id == 129) | .widgets_values[1]'
+    type: string
+    cardinality: one
+  steps:
+    selector: '.nodes[] | select(.id == 124) | .widgets_values[1]'
+    type: number
+    cardinality: one

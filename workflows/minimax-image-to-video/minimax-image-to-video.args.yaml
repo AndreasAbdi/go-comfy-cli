@@ -8,3 +8,27 @@ aliases:
     selector: '.nodes[] | select(.id == 105) | .widgets_values[0]'
     type: string
     cardinality: one
+  # Added for the Limbus prologue production run.
+  #
+  # width/height on node 105 are DEAD -- they are overridden by links from the
+  # ResolutionSelector (115), which shipped set to "1:1 (Square)" at 0.4 MP
+  # (~640x640). The ImageScaleToTotalPixels/GetImageSize pair looks like it
+  # sizes from the input image but its output goes nowhere. Drive the selector.
+  aspect:
+    selector: '.nodes[] | select(.id == 115) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  megapixels:
+    selector: '.nodes[] | select(.id == 115) | .widgets_values[1]'
+    type: number
+    cardinality: one
+  # Seconds. A ComfyMathExpression quantises this to a legal MiniMax length:
+  # max(5,round(a*24)) + (5 - (max(5,round(a*24)) % 17)) % 17
+  duration:
+    selector: '.nodes[] | select(.id == 105) | .widgets_values[3]'
+    type: number
+    cardinality: one
+  seed:
+    selector: '.nodes[] | select(.id == 105) | .widgets_values[4]'
+    type: number
+    cardinality: one

@@ -1,0 +1,17 @@
+{
+  "_comment": "Manual corrections to the aligned WAV->line mapping. Each entry must carry the evidence that justifies it. Applied by align_vo.py after alignment.",
+  "S001B": {
+    "25": {
+      "line_id": 24,
+      "reason": "Korean transcript is '흠, 그렇군. 입이 없었지.' — '입이 없었지' is literally 'there was no mouth', which is line 24 ('… Right. No mouth.'). Whisper's English pass dropped the clause and rendered it 'I was wrong', which scored 0.16 against the correct line and pulled the aligner one line early. Neighbours (wav 21->20, wav 26->25) also bracket offset -1.",
+      "verified_by": "korean-transcript-inspection",
+      "date": "2026-08-06"
+    },
+    "47": {
+      "line_id": 48,
+      "reason": "Lines 48 (Faust: 'Follow your star.') and 49 (Dante: '<Follow... your star.>') have identical English, so similarity scores 1.00 against either and the aligner cannot separate them. The Korean is '너의 별을 따라가거라.' — '따라가거라' is an authoritative imperative, which is Faust instructing him (line 48), not Dante repeating it back. Dante is the silent protagonist and has no other voiced line in the scene.",
+      "verified_by": "korean-grammar-inspection",
+      "date": "2026-08-06"
+    }
+  }
+}

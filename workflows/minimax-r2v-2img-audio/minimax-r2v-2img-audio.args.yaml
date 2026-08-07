@@ -1,26 +1,37 @@
 version: 1
 aliases:
+  subject_image:
+    selector: '.nodes[] | select(.id == 149) | .widgets_values[0]'
+    type: string
+    cardinality: one
+  location_image:
+    selector: '.nodes[] | select(.id == 151) | .widgets_values[0]'
+    type: string
+    cardinality: one
   reference_audio:
     selector: '.nodes[] | select(.id == 148) | .widgets_values[0]'
     type: string
     cardinality: one
-  reference_image:
-    selector: '.nodes[] | select(.id == 149) | .widgets_values[0]'
-    type: string
+
+  shift_video:
+    selector: '.nodes[] | select(.type == "MiniMaxH3SigmaShift") | .widgets_values[0]'
+    type: number
+    cardinality: one
+  shift_audio:
+    selector: '.nodes[] | select(.type == "MiniMaxH3SigmaShift") | .widgets_values[1]'
+    type: number
     cardinality: one
   prompt:
     selector: '.nodes[] | select(.title == "Input Text (Prompt)") | .widgets_values[0]'
     type: string
     cardinality: one
+  # Seconds. Quantised downstream to a legal MiniMax length by
+  # max(5,round(a*24)) + (5 - (max(5,round(a*24)) % 17)) % 17
   duration:
     selector: '.nodes[] | select(.title == "Float (Duration)") | .widgets_values[0]'
     type: number
     cardinality: one
-  # Added for the Limbus prologue production run.
-  #
-  # The 1344x768 sitting in MiniMaxH3ReferenceToVideo.widgets_values is DEAD --
-  # width/height are driven by links from the ResolutionSelector (115), which
-  # ships at 0.4 MP (~864x480). Drive the selector, not the node.
+  # width/height on the R2V node are dead -- they are driven by these.
   aspect:
     selector: '.nodes[] | select(.id == 115) | .widgets_values[0]'
     type: string
@@ -29,7 +40,6 @@ aliases:
     selector: '.nodes[] | select(.id == 115) | .widgets_values[1]'
     type: number
     cardinality: one
-  # RandomNoise ships as "randomize"; pin the mode so the seed is honoured.
   seed:
     selector: '.nodes[] | select(.id == 129) | .widgets_values[0]'
     type: number
