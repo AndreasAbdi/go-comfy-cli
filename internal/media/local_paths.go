@@ -67,15 +67,20 @@ func (r *LocalPathResolver) Resolve(requested string) (resolved LocalPath, found
 		return LocalPath{}, false, nil
 	}
 
+	// CLI arguments are frequently typed as Windows-style paths (".\foo\bar.md")
+	// regardless of the host OS the CLI runs on. path/filepath only treats '\'
+	// as a separator on Windows, so normalize to '/' before joining/cleaning.
+	normalized := filepath.FromSlash(strings.ReplaceAll(requested, `\`, "/"))
+
 	candidates := make([]string, 0, len(r.roots)+1)
-	if filepath.IsAbs(requested) {
-		candidates = append(candidates, requested)
+	if filepath.IsAbs(normalized) {
+		candidates = append(candidates, normalized)
 	} else {
 		for _, root := range r.roots {
-			candidates = append(candidates, filepath.Join(root, requested))
+			candidates = append(candidates, filepath.Join(root, normalized))
 		}
 		if r.inputDir != "" {
-			candidates = append(candidates, filepath.Join(r.inputDir, requested))
+			candidates = append(candidates, filepath.Join(r.inputDir, normalized))
 		}
 	}
 
